@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QUIZ // SYSTEM v9.4</title>
+    <title>QUIZ // SYSTEM v10.0</title>
     <style>
         /* =========================================
            CORE THEME: NOIR & INTERACTIVE
@@ -64,6 +64,7 @@
         .card-header {
             font-size: 11px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;
             border-bottom: 1px solid var(--border); padding-bottom: 5px;
+            display: flex; justify-content: space-between;
         }
 
         /* 3. MANAGER UI */
@@ -78,7 +79,26 @@
         .list-row.selected .c-dim, .list-row.selected .tag { color: #333 !important; }
         .list-content { white-space: pre; overflow: hidden; text-overflow: ellipsis; }
 
-        /* 4. Input Area */
+        /* 4. SNAKE GAME UI (New) */
+        .snake-grid {
+            display: grid;
+            grid-template-columns: repeat(40, 1fr); /* 40 cols */
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            width: fit-content;
+            margin: 0 auto;
+        }
+        .s-cell {
+            width: 12px; height: 12px;
+            background: var(--bg);
+        }
+        .s-snake { background: var(--text-main); }
+        .s-head  { background: var(--edit); }
+        .s-food  { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
+        .s-dead  { background: var(--error); }
+
+        /* 5. Input Area */
         #input-wrapper {
             position: fixed; bottom: 20px; left: 20px; right: 20px;
             background: var(--bg);
@@ -101,6 +121,7 @@
             padding: 10px 16px;
             font-family: inherit; font-size: inherit;
             caret-color: transparent;
+            color: transparent;
         }
 
         #input-display {
@@ -110,20 +131,20 @@
             display: flex;
             align-items: center;
             color: var(--text-main);
+            width: 100%;
         }
 
         .cursor-block {
             display: inline-block;
-            width: 8px; height: 1.2em;
+            width: 9px; height: 1.2em;
             background: var(--accent);
             animation: blink 1s infinite;
-            margin-left: 1px;
+            margin: 0 1px;
             vertical-align: text-bottom;
+            position: relative; top: 1px;
         }
-        
         .cursor-block.edit-mode { background: var(--edit); }
-
-        @keyframes blink { 50% { opacity: 0; } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
         /* Utils */
         .c-dim { color: var(--text-dim); }
@@ -155,14 +176,14 @@
     <input type="text" id="cmd-input" spellcheck="false" autocomplete="off">
     <div id="input-display">
         <span id="prompt-symbol" style="color:var(--text-dim); margin-right:10px">❯</span>
-        <span id="input-mirror"></span><span id="cursor" class="cursor-block"></span>
+        <span id="mirror-left"></span><span id="cursor" class="cursor-block"></span><span id="mirror-right"></span>
     </div>
 </div>
 
 <script>
 /**
- * QUIZ SYSTEM v9.4 // ROCK SOLID INPUT
- * Fix: Centralized Key Logic to prevent ESC/Enter failures
+ * QUIZ SYSTEM v10.0 // SNAKE GAME INTEGRATION
+ * Feature: Added Snake Game Mode without affecting core systems
  */
 
 const STORAGE_KEY = 'quiz_db_v9';
@@ -200,9 +221,13 @@ const Database = {
 };
 
 const State = {
-    mode: 'SHELL', manageIndex: 0, editTargetIndex: null,
+    mode: 'SHELL', // SHELL, QUIZ, BLITZ, MANAGE, EDITING, SNAKE
+    manageIndex: 0, editTargetIndex: null,
     quizPool: [], currentItem: null, answerRaw: null, 
-    blitzScore: 0, blitzEnd: 0, blitzTimer: null
+    blitzScore: 0, blitzEnd: 0, blitzTimer: null,
+    
+    // Snake State
+    snake: [], food: null, direction: 'RIGHT', nextDirection: 'RIGHT', snakeTimer: null, snakeScore: 0
 };
 
 const Sys = {
@@ -210,7 +235,8 @@ const Sys = {
     mgr: document.getElementById('manager-layer'),
     inputWrap: document.getElementById('input-wrapper'),
     input: document.getElementById('cmd-input'),
-    mirror: document.getElementById('input-mirror'),
+    mirrorLeft: document.getElementById('mirror-left'),
+    mirrorRight: document.getElementById('mirror-right'),
     cursor: document.getElementById('cursor'),
     logo: document.getElementById('quiz-logo'),
     statusBar: document.getElementById('status-bar'),
@@ -241,6 +267,15 @@ const Sys = {
         Sys.statusBar.innerHTML = `<div style="display:flex; gap:10px; align-items:center;"><span>${Database.items.length} ITEMS</span> <span>${xp} XP</span> <div class="heatmap-row">${heat}</div></div>`;
     },
 
+    syncCursor: () => {
+        const val = Sys.input.value;
+        const pos = Sys.input.selectionStart;
+        const left = val.substring(0, pos);
+        const right = val.substring(pos);
+        Sys.mirrorLeft.textContent = left.replace(/ /g, '\u00a0');
+        Sys.mirrorRight.textContent = right.replace(/ /g, '\u00a0');
+    },
+
     boot: async () => {
         Sys.animateText(Sys.logo, "QUIZ");
         Database.load();
@@ -248,7 +283,7 @@ const Sys = {
         Sys.inputWrap.style.opacity = 1;
         Sys.input.focus();
         Sys.updateStatus();
-        Sys.print("System Ready. Type <span class='c-accent'>list</span> to manage.", 'line');
+        Sys.print("System Ready. Type <span class='c-accent'>help</span> for commands.", 'line');
     },
 
     exportFile: () => {
@@ -262,18 +297,17 @@ const Sys = {
 
     importFile: () => Sys.fileLoader.click(),
 
-    // --- CENTRAL COMMAND EXECUTION ---
     exec: async (raw) => {
         const val = raw.trim();
         if(!val) return;
 
-        // Routing based on mode (though Key Handler usually catches special modes first)
         if (State.mode === 'EDITING') { Sys.finishEdit(val); return; }
         if (State.mode === 'QUIZ' || State.mode === 'BLITZ') {
             if(['exit','quit','esc'].includes(val.toLowerCase())) { Sys.exitGame(); return; }
             Sys.checkAnswer(val);
             return;
         }
+        if (State.mode === 'SNAKE') return; // Should be handled by key listener, but safe check
 
         Sys.print(`<span class="c-dim">❯</span> ${val}`);
         
@@ -286,12 +320,14 @@ const Sys = {
             case 'list': case 'ls': case 'manage': Sys.enterManage(); break;
             case 'quiz': Sys.startQuiz(argStr); break;
             case 'blitz': Sys.startBlitz(); break;
+            case 'snake': Sys.startSnake(); break; // New Command
             case 'help': 
                 Sys.printCard("HELP", `
                     <span class="c-accent">list</span> : Manage (Edit/Del)<br>
                     <span class="c-accent">+ txt</span> : Quick Add<br>
-                    <span class="c-accent">quiz</span> : Start Training<br>
-                    <span class="c-accent">export</span> / <span class="c-accent">import</span> : Backup
+                    <span class="c-accent">quiz</span> : Training<br>
+                    <span class="c-accent">snake</span> : Play Game<br>
+                    <span class="c-accent">export</span> : Backup
                 `);
                 break;
             case 'export': Sys.exportFile(); break;
@@ -323,13 +359,8 @@ const Sys = {
         State.manageIndex = 0;
         Sys.out.style.opacity = '0.1';
         Sys.mgr.style.display = 'block';
-        
-        // Disable input to prevent typing, but we handle keys globally
-        Sys.input.value = '';
-        Sys.mirror.innerText = '';
-        Sys.input.disabled = true; 
+        Sys.input.blur(); Sys.input.value = ''; Sys.syncCursor(); Sys.input.disabled = true; 
         document.getElementById('input-display').style.opacity = 0.5;
-        
         Sys.renderManage();
     },
 
@@ -340,12 +371,10 @@ const Sys = {
         header.style.color = 'var(--accent)';
         header.innerText = "MANAGER // [Arrow] Move, [Enter] Edit, [Bksp] Del, [ESC] Back";
         Sys.mgr.appendChild(header);
-
         Database.items.forEach((item, i) => {
             const row = document.createElement('div');
             row.className = 'list-row ' + (i === State.manageIndex ? 'selected' : '');
             row.onclick = () => { State.manageIndex = i; Sys.renderManage(); };
-            
             let txt = item.type === 'vocab' ? `${item.q} :: ${item.a}` : item.text;
             let tags = item.tags.map(t=>`#${t}`).join(' ');
             row.innerHTML = `<div class="list-content">${txt} <span class="tag">${tags}</span></div><div class="c-dim" style="font-size:10px">L${item.lvl}</div>`;
@@ -371,14 +400,11 @@ const Sys = {
         const item = Database.items[State.manageIndex];
         let str = item.type==='vocab' ? `${item.q} :: ${item.a}` : item.text;
         if(item.tags.length) str += " " + item.tags.map(t=>`#${t}`).join(' ');
-
-        // FORCE ENABLE and POPULATE immediately
         Sys.input.disabled = false;
         document.getElementById('input-display').style.opacity = 1;
         Sys.input.value = str;
-        Sys.mirror.innerText = str; // Critical for visuals
-        
         Sys.input.focus();
+        setTimeout(() => { Sys.syncCursor(); }, 0);
         Sys.cursor.classList.add('edit-mode');
         Sys.inputWrap.classList.add('editing');
     },
@@ -401,12 +427,113 @@ const Sys = {
     returnToManageNav: () => {
         State.mode = 'MANAGE';
         Sys.input.value = '';
-        Sys.mirror.innerText = '';
+        Sys.syncCursor();
         Sys.input.disabled = true;
+        Sys.input.blur(); 
         document.getElementById('input-display').style.opacity = 0.5;
         Sys.cursor.classList.remove('edit-mode');
         Sys.inputWrap.classList.remove('editing');
         Sys.renderManage();
+    },
+
+    // --- SNAKE GAME LOGIC ---
+    startSnake: () => {
+        State.mode = 'SNAKE';
+        State.snake = [{x: 20, y: 10}, {x: 19, y: 10}, {x: 18, y: 10}];
+        State.direction = 'RIGHT';
+        State.nextDirection = 'RIGHT';
+        State.snakeScore = 0;
+        
+        // Hide input to focus on game
+        Sys.inputWrap.style.opacity = 0.1; 
+        Sys.input.blur();
+        
+        Sys.out.innerHTML = ''; // Clear screen for game board
+        Sys.spawnFood();
+        Sys.renderSnakeBoard();
+        
+        // Game Loop
+        State.snakeTimer = setInterval(Sys.tickSnake, 80);
+    },
+
+    spawnFood: () => {
+        let x, y, collision;
+        do {
+            x = Math.floor(Math.random() * 40);
+            y = Math.floor(Math.random() * 20);
+            collision = State.snake.some(s => s.x === x && s.y === y);
+        } while (collision);
+        State.food = {x, y};
+    },
+
+    tickSnake: () => {
+        State.direction = State.nextDirection;
+        const head = {...State.snake[0]};
+        
+        if (State.direction === 'UP') head.y--;
+        if (State.direction === 'DOWN') head.y++;
+        if (State.direction === 'LEFT') head.x--;
+        if (State.direction === 'RIGHT') head.x++;
+        
+        // Wall Collision
+        if (head.x < 0 || head.x >= 40 || head.y < 0 || head.y >= 20) {
+            Sys.endSnake();
+            return;
+        }
+        
+        // Self Collision
+        if (State.snake.some(s => s.x === head.x && s.y === head.y)) {
+            Sys.endSnake();
+            return;
+        }
+        
+        State.snake.unshift(head);
+        
+        // Eat Food
+        if (head.x === State.food.x && head.y === State.food.y) {
+            State.snakeScore += 10;
+            Sys.spawnFood();
+        } else {
+            State.snake.pop();
+        }
+        
+        Sys.renderSnakeBoard();
+    },
+
+    renderSnakeBoard: () => {
+        let html = `<div style="text-align:center; margin-bottom:10px;">SCORE: <span class="c-accent">${State.snakeScore}</span> <span class="c-dim">(Arrows to Move, ESC to Exit)</span></div>`;
+        html += '<div class="snake-grid" style="grid-template-rows: repeat(20, 1fr);">';
+        
+        // Draw grid
+        // This is a naive render, optimal for small grids. For larger, use canvas.
+        // We render linear cells 40*20 = 800 cells.
+        const board = new Array(800).fill(0); // 0 empty, 1 snake, 2 head, 3 food
+        
+        State.snake.forEach((s, i) => {
+            const idx = s.y * 40 + s.x;
+            if(idx >= 0 && idx < 800) board[idx] = i === 0 ? 2 : 1;
+        });
+        const fIdx = State.food.y * 40 + State.food.x;
+        board[fIdx] = 3;
+        
+        board.forEach(cell => {
+            let cls = 's-cell';
+            if (cell === 1) cls += ' s-snake';
+            if (cell === 2) cls += ' s-head';
+            if (cell === 3) cls += ' s-food';
+            html += `<div class="${cls}"></div>`;
+        });
+        
+        html += '</div>';
+        Sys.out.innerHTML = html;
+    },
+
+    endSnake: () => {
+        clearInterval(State.snakeTimer);
+        State.mode = 'SHELL';
+        Sys.inputWrap.style.opacity = 1;
+        Sys.input.focus();
+        Sys.printCard("GAME OVER", `Final Score: <span class="c-accent">${State.snakeScore}</span>`);
     },
 
     // --- QUIZ & BLITZ ---
@@ -477,69 +604,53 @@ const Sys = {
     exitGame: () => { if(State.mode==='BLITZ') clearInterval(State.blitzTimer); State.mode = 'SHELL'; Sys.print("Exited.", "c-dim"); }
 };
 
-// --- CENTRAL EVENT CONTROLLER (The Fix) ---
-
-// 1. Unified Key Handler (Handles EVERYTHING)
+// --- CENTRAL KEY HANDLER ---
 document.addEventListener('keydown', e => {
-    // A. GLOBAL ESCAPE HATCH
+    // 1. GLOBAL ESCAPE
     if (e.key === 'Escape') {
         if (State.mode === 'MANAGE') { Sys.exitManage(); return; }
         if (State.mode === 'EDITING') { Sys.returnToManageNav(); return; }
         if (State.mode === 'QUIZ' || State.mode === 'BLITZ') { Sys.exitGame(); return; }
+        if (State.mode === 'SNAKE') { Sys.endSnake(); return; }
     }
 
-    // B. MANAGE MODE KEYS (Intercept before input focus)
+    // 2. SNAKE CONTROLS
+    if (State.mode === 'SNAKE') {
+        if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
+        if (e.key === 'ArrowUp' && State.direction !== 'DOWN') State.nextDirection = 'UP';
+        if (e.key === 'ArrowDown' && State.direction !== 'UP') State.nextDirection = 'DOWN';
+        if (e.key === 'ArrowLeft' && State.direction !== 'RIGHT') State.nextDirection = 'LEFT';
+        if (e.key === 'ArrowRight' && State.direction !== 'LEFT') State.nextDirection = 'RIGHT';
+        return;
+    }
+
+    // 3. MANAGE MODE
     if (State.mode === 'MANAGE') {
-        e.preventDefault(); // Stop scroll
-        if (e.key === 'ArrowUp' || e.key === 'Up') {
-            State.manageIndex = (State.manageIndex - 1 + Database.items.length) % Database.items.length;
-            Sys.renderManage();
-        } 
-        else if (e.key === 'ArrowDown' || e.key === 'Down') {
-            State.manageIndex = (State.manageIndex + 1) % Database.items.length;
-            Sys.renderManage();
-        }
+        e.preventDefault();
+        if (e.key === 'ArrowUp' || e.key === 'Up') { State.manageIndex = (State.manageIndex - 1 + Database.items.length) % Database.items.length; Sys.renderManage(); }
+        else if (e.key === 'ArrowDown' || e.key === 'Down') { State.manageIndex = (State.manageIndex + 1) % Database.items.length; Sys.renderManage(); }
         else if (e.key === 'Enter') { Sys.enterEditFromManage(); }
         else if (e.key === 'Backspace' || e.key === 'Delete') {
-            if(confirm("Delete this item?")) {
+            if(confirm("Delete item?")) {
                 Database.items.splice(State.manageIndex, 1);
                 Database.save();
-                if(Database.items.length === 0) Sys.exitManage();
-                else {
-                    if(State.manageIndex >= Database.items.length) State.manageIndex--;
-                    Sys.renderManage();
-                    Sys.updateStatus();
-                }
+                if(!Database.items.length) Sys.exitManage();
+                else { if(State.manageIndex>=Database.items.length) State.manageIndex--; Sys.renderManage(); Sys.updateStatus(); }
             }
         }
-        return; // Don't let other logic run
+        return;
     }
 
-    // C. EDITING MODE KEYS
-    if (State.mode === 'EDITING') {
-        if (e.key === 'Enter') {
-            Sys.finishEdit(Sys.input.value);
-        }
-        return; // Let native input handling work for other keys
-    }
-
-    // D. SHELL/QUIZ KEYS (Default behavior + Focus Logic)
-    if (e.key === 'Enter') {
+    // 4. DEFAULT INPUT
+    if (e.key === 'Enter' && State.mode !== 'MANAGE') {
         Sys.exec(Sys.input.value);
-        Sys.input.value = ''; 
-        Sys.mirror.innerText = '';
+        if (State.mode !== 'EDITING') { Sys.input.value = ''; Sys.syncCursor(); }
     } else {
-        // Auto-focus if typing normally
-        if(document.activeElement !== Sys.input && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-            Sys.input.focus();
-        }
+        if(document.activeElement !== Sys.input && e.key.length === 1 && !e.ctrlKey && !e.metaKey) Sys.input.focus();
     }
 });
 
-// 2. Mirror Input Visuals
-Sys.input.addEventListener('input', () => Sys.mirror.innerText = Sys.input.value);
-
-// 3. File Loader
+Sys.input.addEventListener('input', Sys.syncCursor);
 Sys.fileLoader.addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;

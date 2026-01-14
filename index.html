@@ -3,211 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QUIZ</title>
+    <title>QUIZ // SYSTEM v24.1 (SCIENTIFIC)</title>
     <style>
-        /* =========================================
-           CORE THEME: NOIR & PHANTOM
-           ========================================= */
         :root {
             --bg: #000000;
             --surface: #0a0a0a;
             --border: #1f1f1f;
-            
             --text-main: #e5e5e5;
             --text-dim: #666;
-            
             --accent: #d2a8ff; 
             --edit: #e3b341;
             --cpu: #4af626;
             --err: #ff0055;
-            
             --cursor-bg: #e5e5e5;
             --cursor-text: #000000;
-            
             --font: "JetBrains Mono", "Menlo", "Consolas", monospace;
         }
-
         * { box-sizing: border-box; cursor: text; }
-        
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            background: var(--bg); 
-            color: var(--text-main);
-            font-family: var(--font); 
-            font-size: 13px; 
-            line-height: 1.6;
+            background: var(--bg); color: var(--text-main);
+            font-family: var(--font); font-size: 13px; line-height: 1.6;
             overflow: hidden;
         }
-
-        /* 1. Header */
         #header {
             position: fixed; top: 0; left: 0; width: 100%; height: 40px;
-            background: rgba(0,0,0,0.9);
-            border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; padding: 0 20px;
-            z-index: 100;
+            background: rgba(0,0,0,0.9); border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; padding: 0 20px; z-index: 100;
         }
         .logo-text { font-weight: 800; letter-spacing: 2px; color: var(--text-main); }
-
-        /* 2. Main Terminal */
         #terminal {
             position: absolute; top: 40px; bottom: 0; left: 0; width: 100%;
-            padding: 20px 20px 80px 20px; /* Padding for HUD space */
-            overflow-y: auto; z-index: 10;
+            padding: 20px 20px 80px 20px; overflow-y: auto; z-index: 10;
         }
         .line { margin-bottom: 6px; white-space: pre-wrap; word-break: break-all; }
         .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 12px 16px;
-            margin: 8px 0 16px 0;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 6px; padding: 12px 16px; margin: 8px 0 16px 0;
         }
         .card-header {
             font-size: 11px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;
             border-bottom: 1px solid var(--border); padding-bottom: 5px;
             display: flex; justify-content: space-between;
         }
-
-        /* 3. MANAGER UI */
         #manager-layer {
             position: absolute; top: 40px; bottom: 80px; left: 0; width: 100%;
-            background: var(--bg);
-            z-index: 50; display: none; overflow-y: auto; padding: 10px 0;
+            background: var(--bg); z-index: 50; display: none; overflow-y: auto; padding: 10px 0;
         }
         .list-row { padding: 4px 20px; color: var(--text-dim); cursor: pointer; display: flex; justify-content: space-between; }
         .list-row:hover { background: rgba(255,255,255,0.05); }
         .list-row.selected { background-color: var(--cursor-bg); color: var(--cursor-text); }
         .list-row.selected .c-dim, .list-row.selected .tag { color: #333 !important; }
         .list-content { white-space: pre; overflow: hidden; text-overflow: ellipsis; }
-
-        /* 4. GAME GRIDS */
         .snake-grid { display: grid; grid-template-columns: repeat(40, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); width: fit-content; margin: 0 auto; }
         .s-cell { width: 12px; height: 12px; background: var(--bg); }
         .s-snake { background: var(--text-main); }
         .s-head { background: var(--edit); }
         .s-food { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
-
         .gomoku-board { font-family: "Courier New", monospace; line-height: 1; text-align: center; color: #555; user-select: none; font-size: 16px; margin-top: 20px;}
         .g-row { display: block; }
         .g-cell { display: inline-block; width: 1.2em; height: 1.2em; text-align: center; cursor: pointer; }
         .g-cursor { background: var(--text-dim); color: #000; border-radius: 2px; }
         .g-black { color: var(--accent); }
         .g-white { color: var(--cpu); }
-
-        /* 5. MUSIC DOCK (Persistent HUD) */
         #music-dock {
-            position: fixed; 
-            bottom: 65px; /* Above input */
-            left: 20px; 
-            width: 340px;
-            z-index: 150;
-            display: none; /* Hidden by default */
-            flex-direction: column;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.3s, transform 0.3s;
+            position: fixed; bottom: 65px; left: 20px; width: 340px;
+            z-index: 150; display: none; flex-direction: column;
+            opacity: 0; transform: translateY(10px); transition: opacity 0.3s, transform 0.3s;
         }
         #music-dock.visible { opacity: 1; transform: translateY(0); }
-
         .music-header {
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            background: rgba(0,0,0,0.85);
-            border: 1px solid #333;
-            border-bottom: none;
-            padding: 4px 8px;
-            border-radius: 4px 4px 0 0;
-            backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: space-between; 
+            background: rgba(0,0,0,0.85); border: 1px solid #333; border-bottom: none;
+            padding: 4px 8px; border-radius: 4px 4px 0 0; backdrop-filter: blur(8px);
         }
-        
-        .music-info {
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-            max-width: 160px; font-size: 12px;
-        }
-
+        .music-info { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; font-size: 12px; }
         .music-controls { display: flex; gap: 8px; flex-shrink: 0; }
-
-        .music-ctrl {
-            cursor: pointer; color: var(--text-dim); font-weight: bold; font-size: 11px;
-            transition: all 0.2s; user-select: none;
-        }
+        .music-ctrl { cursor: pointer; color: var(--text-dim); font-weight: bold; font-size: 11px; transition: all 0.2s; user-select: none; }
         .music-ctrl:hover { color: var(--accent); text-shadow: 0 0 5px var(--accent); }
-        .music-ctrl.add-btn:hover { color: var(--cpu); text-shadow: 0 0 5px var(--cpu); }
-        .music-ctrl.min-btn:hover { color: #fff; }
-
         .viz-container {
-            width: 100%; height: 60px;
-            background: rgba(0,0,0,0.9);
-            border: 1px solid #333;
-            border-top: none;
-            border-radius: 0 0 4px 4px;
-            cursor: pointer;
-            overflow: hidden;
-            position: relative;
+            width: 100%; height: 60px; background: rgba(0,0,0,0.9);
+            border: 1px solid #333; border-top: none; border-radius: 0 0 4px 4px;
+            cursor: pointer; overflow: hidden; position: relative;
         }
         .viz-canvas-inline { width: 100%; height: 100%; display: block; }
-
-        /* 6. Input Area */
         #input-wrapper {
             position: fixed; bottom: 20px; left: 20px; right: 20px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 10px 16px;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
-            z-index: 200;
-            display: flex; align-items: center;
-            font-family: var(--font);
-            font-size: 14px;
-            overflow: hidden;
-            transition: border-color 0.2s;
+            background: var(--bg); border: 1px solid var(--border);
+            border-radius: 8px; padding: 10px 16px; box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+            z-index: 200; display: flex; align-items: center; font-family: var(--font); font-size: 14px;
+            overflow: hidden; transition: border-color 0.2s;
         }
         #input-wrapper.editing { border-color: var(--edit); }
-
         #cmd-input {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0; z-index: 2;
-            padding: 10px 16px;
-            font-family: inherit; font-size: inherit;
-            caret-color: transparent;
-            color: transparent;
+            opacity: 0; z-index: 2; padding: 10px 16px; font-family: inherit; font-size: inherit;
+            caret-color: transparent; color: transparent;
         }
-
         #input-display {
-            position: relative; z-index: 1;
-            white-space: pre;
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            color: var(--text-main);
-            width: 100%;
+            position: relative; z-index: 1; white-space: pre; pointer-events: none;
+            display: flex; align-items: center; color: var(--text-main); width: 100%;
         }
-
         .cursor-block {
-            display: inline-block;
-            width: 9px; height: 1.2em;
-            background: var(--accent);
-            animation: blink 1s infinite;
-            margin: 0 1px;
-            vertical-align: text-bottom;
+            display: inline-block; width: 9px; height: 1.2em; background: var(--accent);
+            animation: blink 1s infinite; margin: 0 1px; vertical-align: text-bottom;
             position: relative; top: 1px;
         }
         .cursor-block.edit-mode { background: var(--edit); }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-        /* Utils */
-        .c-dim { color: var(--text-dim); }
-        .c-accent { color: var(--accent); }
-        .c-cpu { color: var(--cpu); }
-        .c-err { color: var(--err); }
-        .c-success { color: #3fb950; }
+        .c-dim { color: var(--text-dim); } .c-accent { color: var(--accent); } .c-cpu { color: var(--cpu); }
+        .c-err { color: var(--err); } .c-success { color: #3fb950; }
         .heatmap-row { display: flex; gap: 3px; }
         .heat-cell { width:8px; height:8px; background:#222; border-radius:1px; }
         .heat-on { background: var(--accent); }
         .pulse-icon { animation: pulse 2s infinite; color: var(--accent); margin-right:5px; display:none; }
         @keyframes pulse { 0% { opacity:0.3; } 50% { opacity:1; } 100% { opacity:0.3; } }
+        .diff-ok { color: var(--cpu); } 
+        .diff-bad { color: var(--err); text-decoration: line-through; opacity: 0.7; }
+        .diff-miss { color: var(--edit); border-bottom: 1px dashed var(--edit); }
     </style>
 </head>
 <body>
@@ -224,18 +137,16 @@
 
 <div id="music-dock">
     <div class="music-header">
-        <div class="music-info" id="music-info-text">
-            <span class="c-dim">Ready</span>
-        </div>
+        <div class="music-info" id="music-info-text"><span class="c-dim">Ready</span></div>
         <div class="music-controls">
             <span class="music-ctrl" onclick="Sys.controlMusic('PREV')">[ << ]</span>
             <span class="music-ctrl" id="music-toggle-btn" onclick="Sys.controlMusic('TOGGLE')">[ ▶ ]</span>
             <span class="music-ctrl" onclick="Sys.controlMusic('NEXT')">[ >> ]</span>
-            <span class="music-ctrl add-btn" onclick="Sys.controlMusic('ADD')" title="Add to Playlist">[ + ]</span>
-            <span class="music-ctrl min-btn" onclick="Sys.toggleMusicDock(false)" title="Hide (Tab)">[ _ ]</span>
+            <span class="music-ctrl" onclick="Sys.controlMusic('ADD')">[ + ]</span>
+            <span class="music-ctrl" onclick="Sys.toggleMusicDock(false)">[ _ ]</span>
         </div>
     </div>
-    <div class="viz-container" onclick="Sys.cycleVizMode()" title="Click to Switch Viz">
+    <div class="viz-container" onclick="Sys.cycleVizMode()">
         <canvas id="hud-viz-canvas" class="viz-canvas-inline"></canvas>
     </div>
 </div>
@@ -255,60 +166,39 @@
 </div>
 
 <script>
-/**
- * QUIZ SYSTEM v22.0 // PHANTOM AUDIO
- * Feature: TAB key toggles Music Dock
- * Feature: Background Audio ("Phantom Mode")
- * Feature: Append Songs
- */
-
-const STORAGE_KEY = 'quiz_db_v9';
-const ACTIVITY_KEY = 'quiz_act_v1';
-
 const Database = {
-    items: [], activity: {}, 
-    load: function() {
-        const d = localStorage.getItem(STORAGE_KEY);
-        const a = localStorage.getItem(ACTIVITY_KEY);
-        if (d) {
-            this.items = JSON.parse(d);
-            this.items.forEach(i => { if(!i.streak) i.streak = 0; if(!i.tags) i.tags = []; });
-        }
-        if (a) this.activity = JSON.parse(a);
+    items: [],
+    load: async function() {
+        try {
+            const res = await fetch('/api/load');
+            const data = await res.json();
+            this.items = data.map(i => ({
+                ...i, streak: i.streak || 0, tags: i.tags || [],
+                nextReview: i.nextReview || 0, interval: i.interval || 0, ef: i.ef || 2.5
+            }));
+        } catch (e) { Sys.print("⚠ OFFLINE MODE. Server not detected.", "c-err"); }
     },
-    save: function() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.items));
-        localStorage.setItem(ACTIVITY_KEY, JSON.stringify(this.activity));
+    save: async function() {
+        try {
+            await fetch('/api/save', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(this.items, null, 2)
+            });
+        } catch (e) {}
     },
-    logActivity: function() {
-        const k = new Date().toISOString().split('T')[0];
-        this.activity[k] = (this.activity[k]||0) + 1;
-        this.save();
-    },
-    getHeatmap: function() {
-        const res = [];
-        for(let i=4; i>=0; i--) {
-            const d = new Date(); d.setDate(d.getDate()-i);
-            const k = d.toISOString().split('T')[0];
-            res.push(this.activity[k]||0);
-        }
-        return res;
-    }
+    logActivity: function() { this.save(); },
+    getHeatmap: function() { return [0,0,0,0,0]; }
 };
 
 const State = {
     mode: 'SHELL', manageIndex: 0, editTargetIndex: null,
     quizPool: [], currentItem: null, answerRaw: null, 
     blitzScore: 0, blitzEnd: 0, blitzTimer: null,
-    
     snake: [], food: null, direction: 'RIGHT', nextDirection: 'RIGHT', snakeTimer: null, snakeScore: 0,
     gmBoard: [], gmCursor: {x:7, y:7}, gmTurn: 1, gmAiMode: false,
-    
-    // Audio
     audioCtx: null, audioSource: null, analyser: null, vizRunning: false, 
-    vizMode: 0, vizSeed: 0,
-    playlist: [], playIndex: 0, isPlaying: false, isAppending: false,
-    isDockVisible: false // HUD visibility state
+    vizMode: 0, vizSeed: 0, playlist: [], playIndex: 0, isPlaying: false, isAppending: false,
+    isDockVisible: false, stats: { correct: 0, total: 0 }
 };
 
 const Sys = {
@@ -349,13 +239,16 @@ const Sys = {
     printCard: (head, body) => Sys.print(`<div class="card-header">${head}</div><div>${body}</div>`, 'card'),
 
     updateStatus: () => {
-        const xp = Database.items.reduce((a,b)=>a+(b.lvl||0), 0);
+        const now = Date.now();
+        const due = Database.items.filter(i => i.nextReview <= now).length;
         const heat = Database.getHeatmap().map(v=>`<div class="heat-cell ${v>0?'heat-on':''}"></div>`).join('');
-        
-        // Add Music Icon if playing but hidden
         const musicIcon = (State.isPlaying && !State.isDockVisible) ? `<span class="pulse-icon" style="display:inline-block">♪</span>` : '';
-        
-        Sys.statusBar.innerHTML = `${musicIcon} <div style="display:flex; gap:10px; align-items:center;"><span>${Database.items.length} ITEMS</span> <span>${xp} XP</span> <div class="heatmap-row">${heat}</div></div>`;
+        let sessionInfo = "";
+        if (State.stats.total > 0) {
+            const acc = Math.round((State.stats.correct / State.stats.total) * 100);
+            sessionInfo = `<span class="c-dim">ACC:${acc}%</span>`;
+        }
+        Sys.statusBar.innerHTML = `${musicIcon} <div style="display:flex; gap:10px; align-items:center;"><span>${Database.items.length} ITEMS</span> <span class="${due>0?'c-accent':''}">DUE: ${due}</span> ${sessionInfo} <div class="heatmap-row">${heat}</div></div>`;
     },
 
     syncCursor: () => {
@@ -369,19 +262,14 @@ const Sys = {
 
     boot: async () => {
         Sys.animateText(Sys.logo, "QUIZ");
-        Database.load();
+        await Database.load();
         await new Promise(r => setTimeout(r, 500));
         Sys.inputWrap.style.opacity = 1;
         Sys.input.focus();
         Sys.updateStatus();
-        Sys.print("System Ready. Type <span class='c-accent'>help</span>.", 'line');
-        
-        Sys.audioEl.addEventListener('ended', () => {
-            if(State.playlist.length > 0) Sys.controlMusic('NEXT');
-        });
-        
-        Sys.hudCanvas.width = 340;
-        Sys.hudCanvas.height = 60;
+        Sys.print("System Ready.", 'line');
+        Sys.audioEl.addEventListener('ended', () => { if(State.playlist.length > 0) Sys.controlMusic('NEXT'); });
+        Sys.hudCanvas.width = 340; Sys.hudCanvas.height = 60;
     },
 
     exportFile: () => {
@@ -395,29 +283,19 @@ const Sys = {
 
     importFile: () => Sys.fileLoader.click(),
     
-    // --- MUSIC PLAYER ---
-    playMusic: () => {
-        State.isAppending = false; 
-        Sys.musicLoader.click();
-    },
+    playMusic: () => { State.isAppending = false; Sys.musicLoader.click(); },
 
     handlePlaylistLoad: (files) => {
         const newFiles = Array.from(files);
         if (newFiles.length === 0) return;
-
         if (State.isAppending) {
             const prevLen = State.playlist.length;
             State.playlist.push(...newFiles);
-            Sys.print(`✔ Added ${newFiles.length} songs.`, "c-success");
-            if (!State.isPlaying && prevLen === 0) Sys.playTrack(0);
-            else Sys.updateHUDInfo();
+            if (!State.isPlaying && prevLen === 0) Sys.playTrack(0); else Sys.updateHUDInfo();
         } else {
-            State.playlist = newFiles;
-            State.playIndex = 0;
-            Sys.playTrack(0);
+            State.playlist = newFiles; State.playIndex = 0; Sys.playTrack(0);
         }
-        
-        Sys.toggleMusicDock(true); // Auto show
+        Sys.toggleMusicDock(true);
     },
 
     playTrack: (index) => {
@@ -425,11 +303,7 @@ const Sys = {
         if (index < 0) index = State.playlist.length - 1;
         if (index >= State.playlist.length) index = 0;
         State.playIndex = index;
-        
-        const file = State.playlist[index];
-        const url = URL.createObjectURL(file);
-        
-        Sys.startAudioEngine(url, file.name);
+        Sys.startAudioEngine(URL.createObjectURL(State.playlist[index]), State.playlist[index].name);
     },
 
     startAudioEngine: (src, name) => {
@@ -438,21 +312,14 @@ const Sys = {
             State.audioSource = State.audioCtx.createMediaElementSource(Sys.audioEl);
             State.analyser = State.audioCtx.createAnalyser();
             State.analyser.fftSize = 256;
-            State.analyser.smoothingTimeConstant = 0.8;
             State.audioSource.connect(State.analyser);
             State.analyser.connect(State.audioCtx.destination);
         }
-
         Sys.audioEl.src = src;
         Sys.audioEl.play().catch(e => Sys.print("Audio Err: " + e.message, "c-err"));
         State.isPlaying = true;
-        
         Sys.updateHUDInfo();
-        
-        if (!State.vizRunning) {
-            State.vizRunning = true;
-            Sys.renderViz();
-        }
+        if (!State.vizRunning) { State.vizRunning = true; Sys.renderViz(); }
     },
 
     updateHUDInfo: () => {
@@ -460,52 +327,36 @@ const Sys = {
         const name = file ? file.name : "No Track";
         Sys.musicInfo.innerHTML = `<span class="c-dim">♪</span> <span class="c-accent">${name}</span> <span class="c-dim">[${State.playIndex+1}/${State.playlist.length}]</span>`;
         document.getElementById('music-toggle-btn').innerText = State.isPlaying ? '[ || ]' : '[ ▶ ]';
-        Sys.updateStatus(); // Update top bar icon
+        Sys.updateStatus();
     },
 
     toggleMusicDock: (forceState) => {
         if (forceState !== undefined) State.isDockVisible = forceState;
         else State.isDockVisible = !State.isDockVisible;
-
         if (State.isDockVisible) {
             Sys.musicDock.style.display = 'flex';
-            // Small delay to allow display:flex to apply before opacity transition
             setTimeout(() => Sys.musicDock.classList.add('visible'), 10);
         } else {
             Sys.musicDock.classList.remove('visible');
             setTimeout(() => Sys.musicDock.style.display = 'none', 300);
         }
-        Sys.updateStatus(); // Update top bar icon
+        Sys.updateStatus();
     },
 
     controlMusic: (action) => {
-        if (action === 'ADD') {
-            State.isAppending = true;
-            Sys.musicLoader.click();
-            return;
-        }
-
+        if (action === 'ADD') { State.isAppending = true; Sys.musicLoader.click(); return; }
         if (!State.playlist.length) return;
-        
         if (action === 'PREV') Sys.playTrack(State.playIndex - 1);
         if (action === 'NEXT') Sys.playTrack(State.playIndex + 1);
         if (action === 'TOGGLE') {
-            if (Sys.audioEl.paused) {
-                Sys.audioEl.play();
-                State.isPlaying = true;
-            } else {
-                Sys.audioEl.pause();
-                State.isPlaying = false;
-            }
+            if (Sys.audioEl.paused) { Sys.audioEl.play(); State.isPlaying = true; } 
+            else { Sys.audioEl.pause(); State.isPlaying = false; }
             Sys.updateHUDInfo();
         }
     },
 
-    cycleVizMode: () => {
-        State.vizMode = (State.vizMode + 1) % 4;
-    },
+    cycleVizMode: () => { State.vizMode = (State.vizMode + 1) % 4; },
 
-    // Helper: Add Noise
     addNoise: (ctx, w, h, amount=0.1) => {
         const idata = ctx.getImageData(0,0,w,h);
         const buf32 = new Uint32Array(idata.data.buffer);
@@ -521,23 +372,14 @@ const Sys = {
     renderViz: () => {
         if (!State.vizRunning) return;
         requestAnimationFrame(Sys.renderViz);
-        
-        // Optimization: Don't render if hidden
         if (!State.isDockVisible) return;
-
         State.vizSeed += 0.03;
-        
-        const canvas = Sys.hudCanvas;
-        const ctx = canvas.getContext('2d');
-        const w = canvas.width;
-        const h = canvas.height;
+        const canvas = Sys.hudCanvas; const ctx = canvas.getContext('2d');
+        const w = canvas.width; const h = canvas.height;
         const bufferLength = State.analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
-        
         ctx.clearRect(0, 0, w, h);
-        
-        // --- MODE 0: PLASMA NOISE ---
-        if (State.vizMode === 0) {
+        if (State.vizMode === 0) { 
             State.analyser.getByteFrequencyData(dataArray);
             for(let i=0; i<20; i++) {
                 const val = dataArray[i*3];
@@ -547,48 +389,28 @@ const Sys = {
                     ctx.beginPath();
                     const x = (w/2) + Math.sin(i + State.vizSeed/2) * (w/3);
                     const y = (h/2) + Math.cos(i + State.vizSeed/3) * (h/3);
-                    const r = val/3;
-                    ctx.arc(x, y, r, 0, Math.PI*2);
-                    ctx.fill();
+                    ctx.arc(x, y, val/3, 0, Math.PI*2); ctx.fill();
                 }
             }
             Sys.addNoise(ctx, w, h, 0.2);
-        }
-
-        // --- MODE 1: SPECTRUM BARS ---
-        else if (State.vizMode === 1) {
+        } else if (State.vizMode === 1) { 
             State.analyser.getByteFrequencyData(dataArray);
-            const barW = (w / bufferLength) * 2.5;
-            let x = 0;
+            const barW = (w / bufferLength) * 2.5; let x = 0;
             for(let i=0; i<bufferLength; i++) {
-                const val = dataArray[i];
-                const barH = (val / 255) * h;
+                const val = dataArray[i]; const barH = (val / 255) * h;
                 ctx.fillStyle = `rgba(210, 168, 255, ${val/255})`;
-                ctx.fillRect(x, h - barH, barW, barH);
-                x += barW + 1;
+                ctx.fillRect(x, h - barH, barW, barH); x += barW + 1;
             }
-        } 
-        
-        // --- MODE 2: OSCILLOSCOPE ---
-        else if (State.vizMode === 2) {
+        } else if (State.vizMode === 2) { 
             State.analyser.getByteTimeDomainData(dataArray);
-            ctx.lineWidth = 1.5;
-            ctx.strokeStyle = '#d2a8ff'; // Accent Color
-            ctx.beginPath();
-            const sliceW = w * 1.0 / bufferLength;
-            let x = 0;
+            ctx.lineWidth = 1.5; ctx.strokeStyle = '#d2a8ff'; ctx.beginPath();
+            const sliceW = w * 1.0 / bufferLength; let x = 0;
             for(let i=0; i<bufferLength; i++) {
-                const v = dataArray[i] / 128.0;
-                const y = v * h / 2;
-                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-                x+=sliceW;
+                const v = dataArray[i] / 128.0; const y = v * h / 2;
+                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); x+=sliceW;
             }
-            ctx.lineTo(w, h/2);
-            ctx.stroke();
-        }
-
-        // --- MODE 3: NOISY FLUID ---
-        else if (State.vizMode === 3) {
+            ctx.lineTo(w, h/2); ctx.stroke();
+        } else if (State.vizMode === 3) { 
             State.analyser.getByteTimeDomainData(dataArray);
             ctx.beginPath(); ctx.fillStyle = "#e0e0e0";
             const sliceW = w * 1.0 / bufferLength; let x = 0;
@@ -606,28 +428,21 @@ const Sys = {
     exec: async (raw) => {
         const val = raw.trim();
         if(!val) return;
-
         if (State.mode === 'EDITING') { Sys.finishEdit(val); return; }
         if (State.mode === 'QUIZ' || State.mode === 'BLITZ') {
             if(['exit','quit','esc'].includes(val.toLowerCase())) { Sys.exitGame(); return; }
-            Sys.checkAnswer(val);
-            return;
+            Sys.checkAnswer(val); return;
         }
         if (State.mode === 'GOMOKU_SETUP') {
             if(val.toUpperCase() === 'A') { State.gmAiMode = true; Sys.startGomokuGame(); }
             else if (val.toUpperCase() === 'H') { State.gmAiMode = false; Sys.startGomokuGame(); }
-            else { Sys.print("Invalid input. [H] or [A]?", "c-err"); }
             return;
         }
         if (State.mode === 'SNAKE' || State.mode === 'GOMOKU') return; 
-
         Sys.print(`<span class="c-dim">❯</span> ${val}`);
-        
         if (val.startsWith('+')) { Sys.addItem(val.substring(1)); return; }
-
         const [cmd, ...args] = val.split(' ');
         const argStr = args.join(' ');
-
         switch(cmd.toLowerCase()) {
             case 'list': case 'ls': case 'manage': Sys.enterManage(); break;
             case 'quiz': Sys.startQuiz(argStr); break;
@@ -635,20 +450,10 @@ const Sys = {
             case 'snake': Sys.startSnake(); break;
             case 'gomoku': Sys.initGomoku(); break;
             case 'music': Sys.playMusic(); break;
-            case 'help': 
-                Sys.printCard("HELP", `
-                    <span class="c-accent">list</span>   : Manager<br>
-                    <span class="c-accent">+ ...</span>  : Add<br>
-                    <span class="c-accent">quiz</span>   : Drill<br>
-                    <span class="c-accent">gomoku</span> : 5-in-row<br>
-                    <span class="c-accent">snake</span>  : Game<br>
-                    <span class="c-accent">music</span>  : Player<br>
-                    <span class="c-accent">export</span> : Backup
-                `);
-                break;
+            case 'import': Sys.importFile(); break; 
             case 'export': Sys.exportFile(); break;
-            case 'import': Sys.importFile(); break;
             case 'clear': Sys.out.innerHTML=''; break;
+            case 'help': Sys.printCard("HELP", `list, quiz, blitz, gomoku, snake, music, import, export`); break;
             default: Sys.print("Unknown command.", "c-error");
         }
     },
@@ -657,24 +462,22 @@ const Sys = {
         const tagRegex = /#(\w+)/g;
         const tags = (str.match(tagRegex)||[]).map(t=>t.substring(1));
         const clean = str.replace(tagRegex,'').trim();
+        const newItem = { tags, lvl:0, streak:0, ef: 2.5, interval: 0, nextReview: 0 };
         if(clean.includes('::')) {
             const [q,a] = clean.split('::').map(s=>s.trim());
-            if(q&&a) Database.items.push({type:'vocab', q, a, tags, lvl:0, streak:0});
+            newItem.type = 'vocab'; newItem.q = q; newItem.a = a;
+            Database.items.push(newItem);
         } else {
-            Database.items.push({type:'sentence', text:clean, tags, lvl:0, streak:0});
+            newItem.type = 'sentence'; newItem.text = clean;
+            Database.items.push(newItem);
         }
-        Database.logActivity();
-        Sys.print("✔ Saved.", "c-success");
-        Sys.updateStatus();
+        Database.logActivity(); Sys.updateStatus(); Sys.print("✔ Saved.", "c-success");
     },
 
-    // --- MANAGER MODE ---
     enterManage: () => {
         if(Database.items.length === 0) { Sys.print("Database empty.", "c-error"); return; }
-        State.mode = 'MANAGE';
-        State.manageIndex = 0;
-        Sys.out.style.opacity = '0.1';
-        Sys.mgr.style.display = 'block';
+        State.mode = 'MANAGE'; State.manageIndex = 0;
+        Sys.out.style.opacity = '0.1'; Sys.mgr.style.display = 'block';
         Sys.input.blur(); Sys.input.value = ''; Sys.syncCursor(); Sys.input.disabled = true; 
         document.getElementById('input-display').style.opacity = 0.5;
         Sys.renderManage();
@@ -683,17 +486,16 @@ const Sys = {
     renderManage: () => {
         Sys.mgr.innerHTML = '';
         const header = document.createElement('div');
-        header.style.padding = '0 20px 10px 20px';
-        header.style.color = 'var(--accent)';
+        header.style.padding = '0 20px 10px 20px'; header.style.color = 'var(--accent)';
         header.innerText = "MANAGER // [Arrow] Move, [Enter] Edit, [Bksp] Del, [ESC] Back";
         Sys.mgr.appendChild(header);
         Database.items.forEach((item, i) => {
             const row = document.createElement('div');
             row.className = 'list-row ' + (i === State.manageIndex ? 'selected' : '');
-            row.onclick = () => { State.manageIndex = i; Sys.renderManage(); };
             let txt = item.type === 'vocab' ? `${item.q} :: ${item.a}` : item.text;
             let tags = item.tags.map(t=>`#${t}`).join(' ');
-            row.innerHTML = `<div class="list-content">${txt} <span class="tag">${tags}</span></div><div class="c-dim" style="font-size:10px">L${item.lvl}</div>`;
+            const dueIn = Math.ceil((item.nextReview - Date.now()) / (1000*60*60*24));
+            row.innerHTML = `<div class="list-content">${txt} <span class="tag">${tags}</span></div><div class="c-dim">Due:${dueIn<=0?"NOW":dueIn+"d"}</div>`;
             Sys.mgr.appendChild(row);
         });
         const sel = Sys.mgr.children[State.manageIndex + 1];
@@ -701,28 +503,18 @@ const Sys = {
     },
 
     exitManage: () => {
-        State.mode = 'SHELL';
-        Sys.mgr.style.display = 'none';
-        Sys.out.style.opacity = '1';
-        Sys.input.disabled = false;
-        document.getElementById('input-display').style.opacity = 1;
-        Sys.input.focus();
+        State.mode = 'SHELL'; Sys.mgr.style.display = 'none'; Sys.out.style.opacity = '1';
+        Sys.input.disabled = false; document.getElementById('input-display').style.opacity = 1; Sys.input.focus();
     },
 
-    // --- EDITING ---
     enterEditFromManage: () => {
-        State.mode = 'EDITING';
-        State.editTargetIndex = State.manageIndex;
+        State.mode = 'EDITING'; State.editTargetIndex = State.manageIndex;
         const item = Database.items[State.manageIndex];
         let str = item.type==='vocab' ? `${item.q} :: ${item.a}` : item.text;
         if(item.tags.length) str += " " + item.tags.map(t=>`#${t}`).join(' ');
-        Sys.input.disabled = false;
-        document.getElementById('input-display').style.opacity = 1;
-        Sys.input.value = str;
-        Sys.input.focus();
-        setTimeout(() => { Sys.syncCursor(); }, 0);
-        Sys.cursor.classList.add('edit-mode');
-        Sys.inputWrap.classList.add('editing');
+        Sys.input.disabled = false; document.getElementById('input-display').style.opacity = 1;
+        Sys.input.value = str; Sys.input.focus(); setTimeout(Sys.syncCursor, 0);
+        Sys.cursor.classList.add('edit-mode'); Sys.inputWrap.classList.add('editing');
     },
 
     finishEdit: (val) => {
@@ -735,48 +527,34 @@ const Sys = {
             const [q,a] = clean.split('::').map(s=>s.trim());
             item.type = 'vocab'; item.q = q; item.a = a;
         } else { item.type = 'sentence'; item.text = clean; }
-        item.tags = tags;
-        Database.save();
-        Sys.returnToManageNav();
+        item.tags = tags; Database.save(); Sys.returnToManageNav();
     },
 
     returnToManageNav: () => {
-        State.mode = 'MANAGE';
-        Sys.input.value = '';
-        Sys.syncCursor();
-        Sys.input.disabled = true;
-        Sys.input.blur(); 
-        document.getElementById('input-display').style.opacity = 0.5;
-        Sys.cursor.classList.remove('edit-mode');
-        Sys.inputWrap.classList.remove('editing');
+        State.mode = 'MANAGE'; Sys.input.value = ''; Sys.syncCursor(); Sys.input.disabled = true;
+        Sys.input.blur(); document.getElementById('input-display').style.opacity = 0.5;
+        Sys.cursor.classList.remove('edit-mode'); Sys.inputWrap.classList.remove('editing');
         Sys.renderManage();
     },
 
-    // --- SNAKE GAME ---
     startSnake: () => {
-        State.mode = 'SNAKE';
-        State.snake = [{x: 20, y: 10}, {x: 19, y: 10}, {x: 18, y: 10}];
-        State.direction = 'RIGHT'; State.nextDirection = 'RIGHT';
-        State.snakeScore = 0;
-        Sys.inputWrap.style.opacity = 0.1; Sys.input.blur();
-        Sys.out.innerHTML = ''; 
-        Sys.spawnFood(); Sys.renderSnakeBoard();
-        State.snakeTimer = setInterval(Sys.tickSnake, 80);
+        State.mode = 'SNAKE'; State.snake = [{x: 20, y: 10}, {x: 19, y: 10}, {x: 18, y: 10}];
+        State.direction = 'RIGHT'; State.nextDirection = 'RIGHT'; State.snakeScore = 0;
+        Sys.inputWrap.style.opacity = 0.1; Sys.input.blur(); Sys.out.innerHTML = ''; 
+        Sys.spawnFood(); Sys.renderSnakeBoard(); State.snakeTimer = setInterval(Sys.tickSnake, 80);
     },
 
     spawnFood: () => {
-        let x, y, c;
-        do { x = Math.floor(Math.random()*40); y = Math.floor(Math.random()*20); c = State.snake.some(s=>s.x===x&&s.y===y); } while(c);
+        let x, y;
+        do { x = Math.floor(Math.random()*40); y = Math.floor(Math.random()*20); } while(State.snake.some(s=>s.x===x&&s.y===y));
         State.food = {x, y};
     },
 
     tickSnake: () => {
         State.direction = State.nextDirection;
         const head = {...State.snake[0]};
-        if (State.direction === 'UP') head.y--;
-        if (State.direction === 'DOWN') head.y++;
-        if (State.direction === 'LEFT') head.x--;
-        if (State.direction === 'RIGHT') head.x++;
+        if (State.direction === 'UP') head.y--; if (State.direction === 'DOWN') head.y++;
+        if (State.direction === 'LEFT') head.x--; if (State.direction === 'RIGHT') head.x++;
         if (head.x < 0 || head.x >= 40 || head.y < 0 || head.y >= 20 || State.snake.some(s=>s.x===head.x&&s.y===head.y)) { Sys.endSnake(); return; }
         State.snake.unshift(head);
         if (head.x === State.food.x && head.y === State.food.y) { State.snakeScore += 10; Sys.spawnFood(); } else { State.snake.pop(); }
@@ -784,226 +562,154 @@ const Sys = {
     },
 
     renderSnakeBoard: () => {
-        let html = `<div style="text-align:center; margin-bottom:10px;">SCORE: <span class="c-accent">${State.snakeScore}</span> <span class="c-dim">(Arrows to Move, ESC to Exit)</span></div>`;
+        let html = `<div style="text-align:center; margin-bottom:10px;">SCORE: ${State.snakeScore}</div>`;
         html += '<div class="snake-grid" style="grid-template-rows: repeat(20, 1fr);">';
-        const board = new Array(800).fill(0);
-        State.snake.forEach((s, i) => { if(s.y*40+s.x >=0 && s.y*40+s.x <800) board[s.y*40+s.x] = i===0?2:1; });
-        board[State.food.y*40+State.food.x] = 3;
-        board.forEach(cell => {
-            let cls = 's-cell';
-            if (cell === 1) cls += ' s-snake'; if (cell === 2) cls += ' s-head'; if (cell === 3) cls += ' s-food';
+        const b = new Array(800).fill(0);
+        State.snake.forEach((s, i) => b[s.y*40+s.x] = i===0?2:1);
+        b[State.food.y*40+State.food.x] = 3;
+        b.forEach(cell => {
+            let cls = 's-cell'; if (cell === 1) cls += ' s-snake'; if (cell === 2) cls += ' s-head'; if (cell === 3) cls += ' s-food';
             html += `<div class="${cls}"></div>`;
         });
-        html += '</div>';
-        Sys.out.innerHTML = html;
+        Sys.out.innerHTML = html + '</div>';
     },
 
-    endSnake: () => {
-        clearInterval(State.snakeTimer);
-        State.mode = 'SHELL';
-        Sys.inputWrap.style.opacity = 1;
-        Sys.input.focus();
-        Sys.printCard("GAME OVER", `Final Score: <span class="c-accent">${State.snakeScore}</span>`);
-    },
+    endSnake: () => { clearInterval(State.snakeTimer); State.mode = 'SHELL'; Sys.inputWrap.style.opacity = 1; Sys.input.focus(); Sys.printCard("GAME OVER", `Score: ${State.snakeScore}`); },
 
-    // --- GOMOKU (Five-in-a-row) ---
-    initGomoku: () => {
-        State.mode = 'GOMOKU_SETUP';
-        Sys.printCard("GOMOKU SETUP", "SELECT OPPONENT: <span class='c-accent'>[H]</span>uman vs Human  OR  <span class='c-cpu'>[A]</span>i vs Human");
-    },
+    initGomoku: () => { State.mode = 'GOMOKU_SETUP'; Sys.printCard("GOMOKU", "[H]uman vs Human  OR  [A]i vs Human"); },
     startGomokuGame: () => {
-        State.mode = 'GOMOKU';
-        State.gmBoard = Array(15).fill(0).map(() => Array(15).fill(0));
-        State.gmCursor = {x: 7, y: 7};
-        State.gmTurn = 1; 
-        Sys.inputWrap.style.opacity = 0.1; Sys.input.blur();
-        Sys.renderGomoku();
+        State.mode = 'GOMOKU'; State.gmBoard = Array(15).fill(0).map(() => Array(15).fill(0));
+        State.gmCursor = {x: 7, y: 7}; State.gmTurn = 1; 
+        Sys.inputWrap.style.opacity = 0.1; Sys.input.blur(); Sys.renderGomoku();
     },
-
     renderGomoku: () => {
-        const turnText = State.gmTurn===1 ? 'BLACK ●' : (State.gmAiMode ? 'CPU ○' : 'WHITE ○');
-        const turnClass = State.gmTurn===1 ? 'g-black' : 'g-white';
-        let html = `<div style="text-align:center; margin-bottom:10px;">TURN: <span class="${turnClass}">${turnText}</span> <span class="c-dim">(Arrows Move, Enter Place)</span></div>`;
-        html += `<div class="gomoku-board">`;
+        let html = `<div style="text-align:center; margin-bottom:10px;">TURN: ${State.gmTurn===1?'BLACK':'WHITE'}</div><div class="gomoku-board">`;
         for(let y=0; y<15; y++) {
             html += `<div class="g-row">`;
             for(let x=0; x<15; x++) {
-                const cell = State.gmBoard[y][x];
-                const isCursor = (x === State.gmCursor.x && y === State.gmCursor.y);
-                let char = '＋'; let cls = 'g-cell';
-                if (cell === 1) { char = '●'; cls += ' g-black'; }
-                if (cell === 2) { char = '○'; cls += ' g-white'; }
-                if (isCursor) cls += ' g-cursor';
+                const c = State.gmBoard[y][x]; let char = '＋', cls = 'g-cell';
+                if (c === 1) { char = '●'; cls += ' g-black'; } if (c === 2) { char = '○'; cls += ' g-white'; }
+                if (x === State.gmCursor.x && y === State.gmCursor.y) cls += ' g-cursor';
                 html += `<span class="${cls}">${char}</span>`;
             }
             html += `</div>`;
         }
-        html += `</div>`;
-        Sys.out.innerHTML = html;
+        Sys.out.innerHTML = html + `</div>`;
     },
-
     handleGomokuMove: (dx, dy) => {
-        let nx = State.gmCursor.x + dx;
-        let ny = State.gmCursor.y + dy;
-        if (nx >= 0 && nx < 15 && ny >= 0 && ny < 15) {
-            State.gmCursor = {x: nx, y: ny};
-            Sys.renderGomoku();
-        }
+        let nx = State.gmCursor.x + dx, ny = State.gmCursor.y + dy;
+        if (nx >= 0 && nx < 15 && ny >= 0 && ny < 15) { State.gmCursor = {x: nx, y: ny}; Sys.renderGomoku(); }
     },
-
     placeGomoku: () => {
-        const {x, y} = State.gmCursor;
-        if (State.gmBoard[y][x] !== 0) return; 
-        
+        const {x, y} = State.gmCursor; if (State.gmBoard[y][x] !== 0) return; 
         State.gmBoard[y][x] = State.gmTurn;
         if (Sys.checkWin(x, y, State.gmTurn)) { Sys.endGomoku(State.gmTurn); return; }
-        
-        State.gmTurn = State.gmTurn === 1 ? 2 : 1;
-        Sys.renderGomoku();
-
-        if(State.gmAiMode && State.gmTurn === 2) {
-            setTimeout(Sys.aiGomokuTurn, 500); 
-        }
+        State.gmTurn = State.gmTurn === 1 ? 2 : 1; Sys.renderGomoku();
+        if(State.gmAiMode && State.gmTurn === 2) setTimeout(Sys.aiGomokuTurn, 500); 
     },
-
     aiGomokuTurn: () => {
-        let bestScore = -Infinity;
-        let move = null;
-        for(let y=0; y<15; y++) {
-            for(let x=0; x<15; x++) {
-                if(State.gmBoard[y][x] === 0) {
-                    let score = Sys.evaluateSpot(x, y, 2) + Sys.evaluateSpot(x, y, 1) * 0.8; 
-                    if(score > bestScore) { bestScore = score; move = {x, y}; }
-                }
-            }
+        let bs = -Infinity, move = {x:7, y:7};
+        for(let y=0; y<15; y++) for(let x=0; x<15; x++) if(State.gmBoard[y][x] === 0) {
+            let s = Sys.evaluateSpot(x, y, 2) + Sys.evaluateSpot(x, y, 1) * 0.8;
+            if(s > bs) { bs = s; move = {x, y}; }
         }
-        if(!move) move = {x:7, y:7};
         State.gmBoard[move.y][move.x] = 2;
         if (Sys.checkWin(move.x, move.y, 2)) { Sys.endGomoku(2); return; }
-        State.gmTurn = 1;
-        Sys.renderGomoku();
+        State.gmTurn = 1; Sys.renderGomoku();
     },
-
-    evaluateSpot: (x, y, player) => {
-        const dirs = [[1,0], [0,1], [1,1], [1,-1]];
-        let totalScore = 0;
-        dirs.forEach(([dx, dy]) => {
-            let count = 1; let openEnds = 0;
-            let i=1; while(true){let nx=x+dx*i,ny=y+dy*i;if(nx<0||nx>=15||ny<0||ny>=15||State.gmBoard[ny][nx]!==player){if(nx>=0&&nx<15&&ny>=0&&ny<15&&State.gmBoard[ny][nx]===0)openEnds++;break;}count++;i++;}
-            i=1; while(true){let nx=x-dx*i,ny=y-dy*i;if(nx<0||nx>=15||ny<0||ny>=15||State.gmBoard[ny][nx]!==player){if(nx>=0&&nx<15&&ny>=0&&ny<15&&State.gmBoard[ny][nx]===0)openEnds++;break;}count++;i++;}
-            if(count >= 5) totalScore += 100000;
-            else if(count === 4 && openEnds > 0) totalScore += 10000;
-            else if(count === 3 && openEnds === 2) totalScore += 1000;
-            else if(count === 3 && openEnds === 1) totalScore += 100;
-            else if(count === 2 && openEnds === 2) totalScore += 50;
-            else totalScore += count;
+    evaluateSpot: (x, y, p) => {
+        let ts = 0;
+        [[1,0], [0,1], [1,1], [1,-1]].forEach(([dx, dy]) => {
+            let c = 1, oe = 0;
+            [1, -1].forEach(dir => {
+                let i = 1; while(true) {
+                    let nx = x + dx*i*dir, ny = y + dy*i*dir;
+                    if(nx<0||nx>=15||ny<0||ny>=15||State.gmBoard[ny][nx]!==p){ if(nx>=0&&nx<15&&ny>=0&&ny<15&&State.gmBoard[ny][nx]===0)oe++; break; }
+                    c++; i++;
+                }
+            });
+            if(c >= 5) ts += 100000; else if(c === 4 && oe > 0) ts += 10000; else ts += c;
         });
-        return totalScore;
+        return ts;
     },
+    checkWin: (x, y, p) => [[1,0], [0,1], [1,1], [1,-1]].some(([dx, dy]) => {
+        let c = 1; [1, -1].forEach(dir => {
+            let i = 1; while(true) {
+                let nx = x + dx*i*dir, ny = y + dy*i*dir;
+                if(nx<0||nx>=15||ny<0||ny>=15||State.gmBoard[ny][nx]!==p) break;
+                c++; i++;
+            }
+        }); return c >= 5;
+    }),
+    endGomoku: (w) => { State.mode = 'SHELL'; Sys.inputWrap.style.opacity = 1; Sys.input.focus(); Sys.printCard("GAME OVER", `Winner: ${w===1?'BLACK':'WHITE'}`); },
 
-    checkWin: (x, y, player) => {
-        const dirs = [[1,0], [0,1], [1,1], [1,-1]];
-        return dirs.some(([dx, dy]) => {
-            let count = 1;
-            let i = 1; while(true) { let nx=x+dx*i, ny=y+dy*i; if(nx<0||nx>=15||ny<0||ny>=15||State.gmBoard[ny][nx]!==player) break; count++; i++; }
-            i = 1; while(true) { let nx=x-dx*i, ny=y-dy*i; if(nx<0||nx>=15||ny<0||ny>=15||State.gmBoard[ny][nx]!==player) break; count++; i++; }
-            return count >= 5;
-        });
-    },
-
-    endGomoku: (winner) => {
-        State.mode = 'SHELL';
-        Sys.inputWrap.style.opacity = 1; Sys.input.focus();
-        const wText = winner===1 ? '<span class="c-accent">BLACK ●</span>' : '<span class="c-cpu">CPU ○</span>';
-        Sys.printCard("GAME OVER", `Winner: ${wText}`);
-    },
-
-    // --- QUIZ & BLITZ ---
-    startQuiz: (filter) => {
+    startQuiz: (f) => {
         let pool = Database.items;
-        if(filter && filter.includes('#')) {
-            const tag = filter.match(/#(\w+)/)[1];
-            pool = pool.filter(i=>i.tags.includes(tag));
-        }
-        if(!pool.length) { Sys.print("No items.", "c-error"); return; }
-        State.quizPool = pool; State.mode = 'QUIZ'; Sys.nextQ();
+        if(f && f.includes('#')) { const t = f.match(/#(\w+)/)[1]; pool = pool.filter(i=>i.tags.includes(t)); }
+        if(!pool.length) return;
+        const now = Date.now();
+        pool.sort((a,b) => a.nextReview - b.nextReview);
+        State.quizPool = pool; State.mode = 'QUIZ'; State.stats = { correct: 0, total: 0 }; Sys.nextQ();
     },
-
     startBlitz: () => {
         if(!Database.items.length) return;
-        State.quizPool = Database.items; State.mode = 'BLITZ';
-        State.blitzScore = 0; State.blitzEnd = Date.now() + 60000;
-        Sys.printCard("BLITZ", "60 Seconds. Go!");
+        State.quizPool = Database.items; State.mode = 'BLITZ'; State.blitzScore = 0; State.blitzEnd = Date.now() + 60000;
+        State.stats = { correct: 0, total: 0 }; Sys.printCard("BLITZ", "60s Go!");
         State.blitzTimer = setInterval(() => { if(Date.now()>State.blitzEnd){clearInterval(State.blitzTimer);Sys.endBlitz();} }, 1000);
         Sys.nextQ();
     },
-
     nextQ: () => {
-        const min = Math.min(...State.quizPool.map(i=>i.lvl));
-        const cands = State.quizPool.filter(i=>i.lvl<=min+2);
-        const item = cands[Math.floor(Math.random()*cands.length)];
+        let item = State.mode === 'BLITZ' ? State.quizPool[Math.floor(Math.random()*State.quizPool.length)] : State.quizPool[0];
+        if(State.mode !== 'BLITZ') State.quizPool.push(State.quizPool.shift());
         State.currentItem = item;
-        let content;
-        if(item.type==='vocab') {
-            State.answerRaw = item.a; content = `<div style="font-size:16px; font-weight:bold">${item.q}</div>`;
-        } else {
-            const w = item.text.split(' ');
-            let idx = w.findIndex(x=>x.length>3); if(idx<0) idx=0;
-            State.answerRaw = w[idx].replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
-            content = w.map((x,i)=>i===idx?"<span class='c-accent'>[___]</span>":x).join(' ');
-        }
-        let meta = item.streak > 1 ? ` <span style="color:#ff9000">🔥 ${item.streak}</span>` : '';
-        if(State.mode==='BLITZ') meta += ` <span style="float:right">${Math.ceil((State.blitzEnd-Date.now())/1000)}s</span>`;
-        Sys.printCard(`QUESTION ${meta}`, content);
+        let content, ans;
+        if(item.type==='vocab') { ans = item.a; content = item.q; }
+        else { const w = item.text.split(' '); let idx = w.findIndex(x=>x.length>3); if(idx<0) idx=0; ans = w[idx].replace(/[.,]/g,""); content = w.map((x,i)=>i===idx?"___":x).join(' '); }
+        State.answerRaw = ans; Sys.printCard(`QUESTION`, content);
     },
-
     checkAnswer: (val) => {
-        const raw = State.answerRaw;
-        const seps = /[,，/、 ]+/;
-        const possible = raw.split(seps).map(s=>s.trim()).filter(s=>s);
-        let ok = possible.some(p=>p===val.trim() || (p.length>1 && val.includes(p))) || raw.toLowerCase()===val.trim().toLowerCase();
-        const item = State.currentItem;
-        if(ok) {
-            item.lvl++; item.streak++; if(State.mode==='BLITZ') State.blitzScore++;
-            Sys.print(`✔ Correct: ${raw}`, "c-success");
-            setTimeout(()=>State.mode!=='SHELL' && Sys.nextQ(), 600);
+        const item = State.currentItem, raw = State.answerRaw;
+        State.stats.total++;
+        const dist = Sys.calcLevenshtein(val.trim().toLowerCase(), raw.toLowerCase());
+        const isCorrect = dist === 0 || (raw.length > 5 && dist <= 1);
+        if(isCorrect) {
+            State.stats.correct++; item.streak++; item.lvl++;
+            item.interval = item.interval === 0 ? 1 : Math.round(item.interval * 2.5);
+            item.nextReview = Date.now() + (item.interval * 24 * 3600 * 1000);
+            if(State.mode==='BLITZ') State.blitzScore++;
+            Sys.print(`✔ Correct`, "c-success");
         } else {
-            item.lvl=0; item.streak=0;
+            item.streak = 0; item.interval = 1; item.nextReview = Date.now();
             Sys.print(`✘ Wrong: ${raw}`, "c-error");
-            setTimeout(()=>State.mode!=='SHELL' && Sys.nextQ(), 2000);
         }
-        Database.save(); Database.logActivity(); Sys.updateStatus();
+        Database.save(); Sys.updateStatus(); setTimeout(()=>State.mode!=='SHELL' && Sys.nextQ(), 1000);
     },
-
-    endBlitz: () => { State.mode = 'SHELL'; Sys.printCard("TIME UP", `Score: <span class="c-accent" style="font-size:20px">${State.blitzScore}</span>`); },
+    calcLevenshtein: (a, b) => {
+        const m = []; for(let i=0; i<=b.length; i++) m[i] = [i]; for(let j=0; j<=a.length; j++) m[0][j] = j;
+        for(let i=1; i<=b.length; i++) for(let j=1; j<=a.length; j++) m[i][j] = b[i-1] === a[j-1] ? m[i-1][j-1] : Math.min(m[i-1][j-1]+1, m[i][j-1]+1, m[i-1][j]+1);
+        return m[b.length][a.length];
+    },
+    endBlitz: () => { State.mode = 'SHELL'; Sys.printCard("TIME UP", `Score: ${State.blitzScore}`); },
     exitGame: () => { if(State.mode==='BLITZ') clearInterval(State.blitzTimer); State.mode = 'SHELL'; Sys.print("Exited.", "c-dim"); }
 };
 
-// --- EVENTS ---
 document.addEventListener('keydown', e => {
-    // GLOBAL: TOGGLE MUSIC DOCK
-    if (e.key === 'Tab') {
-        e.preventDefault();
-        Sys.toggleMusicDock();
-        return;
-    }
-
+    if (e.key === 'Tab') { e.preventDefault(); Sys.toggleMusicDock(); return; }
     if (e.key === 'Escape') {
-        if (State.mode === 'MANAGE') { Sys.exitManage(); return; }
-        if (State.mode === 'EDITING') { Sys.returnToManageNav(); return; }
-        if (State.mode === 'QUIZ' || State.mode === 'BLITZ') { Sys.exitGame(); return; }
-        if (State.mode === 'SNAKE') { Sys.endSnake(); return; }
-        if (State.mode === 'GOMOKU_SETUP' || State.mode === 'GOMOKU') { State.mode='SHELL'; Sys.inputWrap.style.opacity=1; Sys.input.disabled=false; Sys.input.focus(); Sys.print("Exited.", "c-dim"); return; }
+        if (State.mode === 'MANAGE') Sys.exitManage();
+        else if (State.mode === 'EDITING') Sys.returnToManageNav();
+        else if (['QUIZ','BLITZ','SNAKE','GOMOKU','GOMOKU_SETUP'].includes(State.mode)) {
+            if(State.mode==='SNAKE') clearInterval(State.snakeTimer);
+            if(State.mode==='BLITZ') clearInterval(State.blitzTimer);
+            State.mode='SHELL'; Sys.inputWrap.style.opacity=1; Sys.input.disabled=false; Sys.input.focus(); Sys.print("Exited.", "c-dim");
+        }
+        return;
     }
     if (State.mode === 'GOMOKU') {
-        e.preventDefault();
-        if(State.gmAiMode && State.gmTurn === 2) return; 
-        if (e.key === 'ArrowUp') Sys.handleGomokuMove(0, -1);
-        if (e.key === 'ArrowDown') Sys.handleGomokuMove(0, 1);
-        if (e.key === 'ArrowLeft') Sys.handleGomokuMove(-1, 0);
-        if (e.key === 'ArrowRight') Sys.handleGomokuMove(1, 0);
-        if (e.key === 'Enter') Sys.placeGomoku();
-        return;
+        e.preventDefault(); if(State.gmAiMode && State.gmTurn === 2) return; 
+        if (e.key === 'ArrowUp') Sys.handleGomokuMove(0, -1); if (e.key === 'ArrowDown') Sys.handleGomokuMove(0, 1);
+        if (e.key === 'ArrowLeft') Sys.handleGomokuMove(-1, 0); if (e.key === 'ArrowRight') Sys.handleGomokuMove(1, 0);
+        if (e.key === 'Enter') Sys.placeGomoku(); return;
     }
     if (State.mode === 'SNAKE') {
         if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
@@ -1015,16 +721,12 @@ document.addEventListener('keydown', e => {
     }
     if (State.mode === 'MANAGE') {
         e.preventDefault();
-        if (e.key === 'ArrowUp' || e.key === 'Up') { State.manageIndex = (State.manageIndex - 1 + Database.items.length) % Database.items.length; Sys.renderManage(); }
-        else if (e.key === 'ArrowDown' || e.key === 'Down') { State.manageIndex = (State.manageIndex + 1) % Database.items.length; Sys.renderManage(); }
-        else if (e.key === 'Enter') { Sys.enterEditFromManage(); }
+        const len = Database.items.length;
+        if (e.key === 'ArrowUp') { State.manageIndex = (State.manageIndex - 1 + len) % len; Sys.renderManage(); }
+        else if (e.key === 'ArrowDown') { State.manageIndex = (State.manageIndex + 1) % len; Sys.renderManage(); }
+        else if (e.key === 'Enter') Sys.enterEditFromManage();
         else if (e.key === 'Backspace' || e.key === 'Delete') {
-            if(confirm("Delete item?")) {
-                Database.items.splice(State.manageIndex, 1);
-                Database.save();
-                if(!Database.items.length) Sys.exitManage();
-                else { if(State.manageIndex>=Database.items.length) State.manageIndex--; Sys.renderManage(); Sys.updateStatus(); }
-            }
+            if(confirm("Delete?")) { Database.items.splice(State.manageIndex, 1); Database.save(); if(!Database.items.length) Sys.exitManage(); else { State.manageIndex = Math.min(State.manageIndex, Database.items.length-1); Sys.renderManage(); Sys.updateStatus(); } }
         }
         return;
     }
@@ -1033,21 +735,23 @@ document.addEventListener('keydown', e => {
         if (State.mode !== 'EDITING') { Sys.input.value = ''; Sys.syncCursor(); }
     } else {
         if(document.activeElement !== Sys.input && e.key.length === 1 && !e.ctrlKey && !e.metaKey) Sys.input.focus();
+        // 关键修复：确保所有按键（包括方向键）触发后同步虚拟光标位置
+        setTimeout(Sys.syncCursor, 0);
     }
 });
+
 Sys.input.addEventListener('input', Sys.syncCursor);
 Sys.fileLoader.addEventListener('change', e => {
     const file = e.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = function(evt) {
-        try { const p = JSON.parse(evt.target.result); if(Array.isArray(p)){ Database.items=p;Database.save();Sys.print(`✔ Loaded ${p.length} items.`,"c-success");Sys.updateStatus();}}catch(e){Sys.print("Error","c-error");}
-    };
-    reader.readAsText(file); Sys.fileLoader.value='';
+        try { const p = JSON.parse(evt.target.result); if(Array.isArray(p)){ 
+            Database.items.push(...p.map(i => ({...i, streak:0, tags:i.tags||[], nextReview:0, interval:0, ef:2.5})));
+            Database.save(); Sys.updateStatus(); Sys.print(`Imported ${p.length} items`, "c-success");
+        }} catch(e) {}
+    }; reader.readAsText(file);
 });
-Sys.musicLoader.addEventListener('change', e => {
-    Sys.handlePlaylistLoad(e.target.files);
-    Sys.musicLoader.value = '';
-});
+Sys.musicLoader.addEventListener('change', e => { Sys.handlePlaylistLoad(e.target.files); Sys.musicLoader.value = ''; });
 Sys.boot();
 </script>
 </body>
